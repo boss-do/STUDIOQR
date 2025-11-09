@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Studio | Generator & Scanner</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #eef2ff;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background-color: #f1f5f9;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .tagline {
+            color: var(--gray);
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .app-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .tabs {
+            display: flex;
+            background: var(--primary-light);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .tab-btn.active {
+            color: var(--primary);
+        }
+        
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 2rem;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .qr-type-selector {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+        
+        .qr-type-btn {
+            padding: 0.75rem 1rem;
+            background: var(--primary-light);
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--primary);
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+        
+        .qr-type-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #3a56d4;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        
+        .qr-result {
+            text-align: center;
+            padding: 2rem;
+            background: var(--primary-light);
+            border-radius: 0.75rem;
+            margin-top: 1.5rem;
+            border: 2px dashed #c7d2fe;
+        }
+        
+        #qrCodeImage {
+            max-width: 100%;
+            height: auto;
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            max-height: 300px;
+        }
+        
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        #scanner-video {
+            width: 100%;
+            display: block;
+            background: #000;
+        }
+        
+        .scanner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+        
+        .scanner-frame {
+            width: 70%;
+            height: 70%;
+            border: 4px solid rgba(67, 97, 238, 0.5);
+            border-radius: 0.75rem;
+            box-shadow: 0 0 0 10000px rgba(0, 0, 0, 0.5);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { border-color: rgba(67, 97, 238, 0.5); }
+            50% { border-color: rgba(67, 97, 238, 0.8); }
+            100% { border-color: rgba(67, 97, 238, 0.5); }
+        }
+        
+        #scan-result {
+            margin-top: 1.5rem;
+            padding: 1.25rem;
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .file-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.75rem;
+            margin-top: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .file-upload:hover {
+            border-color: var(--primary);
+        }
+        
+        .tab-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        .customization-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .color-picker-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .tab-content {
+                padding: 1.5rem;
+            }
+            
+            .qr-type-selector {
+                flex-wrap: wrap;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-qrcode"></i>
+                <span>QR Studio</span>
+            </div>
+            <p class="tagline">Create & scan QR codes in seconds</p>
+        </header>
+        
+        <div class="app-container">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="generate">
+                    <i class="fas fa-qrcode"></i> Generate
+                </button>
+                <button class="tab-btn" data-tab="scan">
+                    <i class="fas fa-camera"></i> Scan
+                </button>
+            </div>
+            
+            <div id="generate" class="tab-content active">
+                <div class="card">
+                    <h3 class="card-title">
+                        <i class="fas fa-edit"></i> Content
+                    </h3>
+                    <div class="qr-type-selector">
+                        <button class="qr-type-btn active" data-type="text">
+                            <i class="fas fa-font"></i> Text
+                        </button>
+                        <button class="qr-type-btn" data-type="url">
+                            <i class="fas fa-link"></i> URL
+                        </button>
+                        <button class="qr-type-btn" data-type="wifi">
+                            <i class="fas fa-wifi"></i> WiFi
+                        </button>
+                        <button class="qr-type-btn" data-type="contact">
+                            <i class="fas fa-address-card"></i> Contact
+                        </button>
+                        <button class="qr-type-btn" data-type="sms">
+                            <i class="fas fa-sms"></i> SMS
+                        </button>
+                        <button class="qr-type-btn" data-type="email">
+                            <i class="fas fa-envelope"></i> Email
+                        </button>
+                        <button class="qr-type-btn" data-type="upi">
+                            <i class="fas fa-rupee-sign"></i> UPI
+                        </button>
+                    </div>
+                    
+                    <div id="text-url-content" class="qr-content-section">
+                        <div class="form-group">
+                            <label id="content-label">
+                                <i class="fas fa-pen"></i> Enter text
+                            </label>
+                            <textarea id="qr-content" placeholder="Type your text here..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div id="wifi-content" class="qr-content-section" style="display:none;">
+                        <div class="form-group">
+                            <label for="wifi-ssid">
+                                <i class="fas fa-wifi"></i> Network Name (SSID)
+                            </label>
+                            <input type="text" id="wifi-ssid" placeholder="Your WiFi network name">
+                        </div>
+                        <div class="form-group">
+                            <label for="wifi-password">
+                                <i class="fas fa-key"></i> Password
+                            </label>
+                            <input type="text" id="wifi-password" placeholder="Your WiFi password">
+                        </div>
+                        <div class="form-group">
+                            <label for="wifi-security">
+                                <i class="fas fa-lock"></i> Security Type
+                            </label>
+                            <select id="wifi-security">
+                                <option value="WPA">WPA/WPA2</option>
+                                <option value="WEP">WEP</option>
+                                <option value="">None (Open)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="contact-content" class="qr-content-section" style="display:none;">
+                        <div class="form-group">
+                            <label for="contact-name">
+                                <i class="fas fa-user"></i> Name
+                            </label>
+                            <input type="text" id="contact-name" placeholder="Full name">
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-phone">
+                                <i class="fas fa-phone"></i> Phone
+                            </label>
+                            <input type="tel" id="contact-phone" placeholder="Phone number">
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-email">
+                                <i class="fas fa-envelope"></i> Email
+                            </label>
+                            <input type="email" id="contact-email" placeholder="Email address">
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-org">
+                                <i class="fas fa-building"></i> Organization
+                            </label>
+                            <input type="text" id="contact-org" placeholder="Company/Organization">
+                        </div>
+                    </div>
+                    
+                    <div id="sms-content" class="qr-content-section" style="display:none;">
+                        <div class="form-group">
+                            <label for="sms-number">
+                                <i class="fas fa-mobile-alt"></i> Phone Number
+                            </label>
+                            <input type="tel" id="sms-number" placeholder="Recipient's phone number">
+                        </div>
+                        <div class="form-group">
+                            <label for="sms-message">
+                                <i class="fas fa-comment"></i> Message
+                            </label>
+                            <textarea id="sms-message" placeholder="Your message"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div id="email-content" class="qr-content-section" style="display:none;">
+                        <div class="form-group">
+                            <label for="email-address">
+                                <i class="fas fa-at"></i> Recipient Email
+                            </label>
+                            <input type="email" id="email-address" placeholder="Email address">
+                        </div>
+                        <div class="form-group">
+                            <label for="email-subject">
+                                <i class="fas fa-heading"></i> Subject
+                            </label>
+                            <input type="text" id="email-subject" placeholder="Email subject">
+                        </div>
+                        <div class="form-group">
+                            <label for="email-body">
+                                <i class="fas fa-align-left"></i> Message
+                            </label>
+                            <textarea id="email-body" placeholder="Email content"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div id="upi-content" class="qr-content-section" style="display:none;">
+                        <div class="form-group">
+                            <label for="upi-id">
+                                <i class="fas fa-user"></i> UPI ID
+                            </label>
+                            <input type="text" id="upi-id" placeholder="yourname@upi">
+                        </div>
+                        <div class="form-group">
+                            <label for="upi-name">
+                                <i class="fas fa-signature"></i> Payee Name
+                            </label>
+                            <input type="text" id="upi-name" placeholder="Your Name">
+                        </div>
+                        <div class="form-group">
+                            <label for="upi-amount">
+                                <i class="fas fa-rupee-sign"></i> Amount (optional)
+                            </label>
+                            <input type="number" id="upi-amount" placeholder="Enter amount">
+                        </div>
+                        <div class="form-group">
+                            <label for="upi-note">
+                                <i class="fas fa-comment"></i> Note (optional)
+                            </label>
+                            <input type="text" id="upi-note" placeholder="Payment note">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 class="card-title">
+                        <i class="fas fa-palette"></i> Customization
+                    </h3>
+                    <div class="customization-grid">
+                        <div class="form-group">
+                            <label for="qr-size">
+                                <i class="fas fa-expand"></i> Size
+                            </label>
+                            <select id="qr-size">
+                                <option value="200">Small</option>
+                                <option value="300" selected>Medium</option>
+                                <option value="400">Large</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="qr-error">
+                                <i class="fas fa-shield-alt"></i> Error Correction
+                            </label>
+                            <select id="qr-error">
+                                <option value="L">Low (7%)</option>
+                                <option value="M" selected>Medium (15%)</option>
+                                <option value="Q">Quartile (25%)</option>
+                                <option value="H">High (30%)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-fill-drip"></i> QR Color
+                            </label>
+                            <div class="color-picker-group">
+                                <input type="color" id="qr-color" value="#000000">
+                                <div class="color-preview" id="qr-color-preview" style="background-color: #000000;"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-fill"></i> Background
+                            </label>
+                            <div class="color-picker-group">
+                                <input type="color" id="qr-bg" value="#ffffff">
+                                <div class="color-preview" id="qr-bg-preview" style="background-color: #ffffff;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button id="generate-btn" class="btn btn-primary">
+                            <i class="fas fa-magic"></i> Generate QR Code
+                        </button>
+                        <button id="reset-btn" class="btn btn-secondary">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="qr-result" id="qr-result" style="display: none;">
+                    <h3>
+                        <i class="fas fa-qrcode"></i> Your QR Code
+                    </h3>
+                    <div id="qr-code"></div>
+                    <canvas id="qrCanvas" style="display: none;"></canvas>
+                    
+                    <div class="btn-group" style="justify-content: center; margin-top: 1.5rem;">
+                        <button id="download-btn" class="btn btn-success">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        <button id="share-btn" class="btn btn-primary">
+                            <i class="fas fa-share-alt"></i> Share
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="tab-footer">
+                    <p>
+                        <i class="fas fa-lock"></i> Your data never leaves your browser. All processing happens locally.
+                    </p>
+                </div>
+            </div>
+            
+            <div id="scan" class="tab-content">
+                <div class="card">
+                    <h3 class="card-title">
+                        <i class="fas fa-camera"></i> Scan QR Code
+                    </h3>
+                    
+                    <div class="camera-permission" id="camera-permission">
+                        <div style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;">
+                            <i class="fas fa-camera-slash"></i>
+                        </div>
+                        <h3>Camera Access Required</h3>
+                        <p>To scan QR codes, please allow camera access when prompted.</p>
+                        <button id="allow-camera-btn" class="btn btn-primary" style="margin-top: 1rem;">
+                            <i class="fas fa-camera"></i> Allow Camera Access
+                        </button>
+                    </div>
+                    
+                    <div class="scanner-container">
+                        <video id="scanner-video" playsinline></video>
+                        <div class="scanner-overlay">
+                            <div class="scanner-frame"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group" style="justify-content: center; margin-top: 1.5rem;">
+                        <button id="start-btn" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Start Scanner
+                        </button>
+                        <button id="stop-btn" class="btn btn-danger" disabled>
+                            <i class="fas fa-stop"></i> Stop Scanner
+                        </button>
+                        <button id="torch-btn" class="btn btn-secondary" disabled>
+                            <i class="fas fa-lightbulb"></i> Flash
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 class="card-title">
+                        <i class="fas fa-image"></i> Or Upload Image
+                    </h3>
+                    
+                    <div class="file-upload" id="file-upload-area">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drag & drop QR code image here</p>
+                        <p style="font-size: 0.8rem; color: var(--gray);">or</p>
+                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                        <button id="upload-scan-btn" class="btn btn-secondary">
+                            <i class="fas fa-folder-open"></i> Select File
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="scan-result" class="card">
+                    <h3 class="card-title">
+                        <i class="fas fa-search"></i> Scan Result
+                    </h3>
+                    <p style="color: var(--gray);">Scan result will appear here</p>
+                </div>
+                
+                <div class="tab-footer">
+                    <p>
+                        <i class="fas fa-history"></i> Scan history is stored only in your browser and cleared when you close the page.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabName = this.getAttribute('data-tab');
+                
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // Deactivate all tab buttons
+                document.querySelectorAll('.tab-btn').forEach(tabBtn => {
+                    tabBtn.classList.remove('active');
+                });
+                
+                // Activate current tab
+                document.getElementById(tabName).classList.add('active');
+                this.classList.add('active');
+                
+                // Stop scanner if switching away from scan tab
+                if (tabName !== 'scan') {
+                    stopScanner();
+                }
+            });
+        });
+        
+        // QR Type selection
+        document.querySelectorAll('.qr-type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const type = this.getAttribute('data-type');
+                
+                // Update active button
+                document.querySelectorAll('.qr-type-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Hide all content sections
+                document.querySelectorAll('.qr-content-section').forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                // Show selected section and update label
+                if (type === 'text' || type === 'url') {
+                    document.getElementById('text-url-content').style.display = 'block';
+                    document.getElementById('content-label').textContent = 
+                        type === 'text' ? 'Enter text:' : 'Enter URL:';
+                } else {
+                    document.getElementById(`${type}-content`).style.display = 'block';
+                }
+            });
+        });
+        
+        // Color picker previews
+        document.getElementById('qr-color').addEventListener('input', function() {
+            document.getElementById('qr-color-preview').style.backgroundColor = this.value;
+        });
+        
+        document.getElementById('qr-bg').addEventListener('input', function() {
+            document.getElementById('qr-bg-preview').style.backgroundColor = this.value;
+        });
+        
+        // Form reset
+        document.getElementById('reset-btn').addEventListener('click', function() {
+            document.getElementById('qr-content').value = '';
+            document.getElementById('wifi-ssid').value = '';
+            document.getElementById('wifi-password').value = '';
+            document.getElementById('contact-name').value = '';
+            document.getElementById('contact-phone').value = '';
+            document.getElementById('contact-email').value = '';
+            document.getElementById('contact-org').value = '';
+            document.getElementById('sms-number').value = '';
+            document.getElementById('sms-message').value = '';
+            document.getElementById('email-address').value = '';
+            document.getElementById('email-subject').value = '';
+            document.getElementById('email-body').value = '';
+            document.getElementById('upi-id').value = '';
+            document.getElementById('upi-name').value = '';
+            document.getElementById('upi-amount').value = '';
+            document.getElementById('upi-note').value = '';
+            document.getElementById('qr-color').value = '#000000';
+            document.getElementById('qr-color-preview').style.backgroundColor = '#000000';
+            document.getElementById('qr-bg').value = '#ffffff';
+            document.getElementById('qr-bg-preview').style.backgroundColor = '#ffffff';
+            document.getElementById('qr-size').value = '300';
+            document.getElementById('qr-error').value = 'M';
+            document.getElementById('qr-code').innerHTML = '';
+            document.getElementById('qr-result').style.display = 'none';
+        });
+        
+        // QR Code Generation
+        document.getElementById('generate-btn').addEventListener('click', generateQR);
+        
+        function generateQR() {
+            const activeType = document.querySelector('.qr-type-btn.active').getAttribute('data-type');
+            let content = '';
+            
+            // Generate content based on type
+            switch(activeType) {
+                case 'text':
+                case 'url':
+                    content = document.getElementById('qr-content').value;
+                    if (!content) {
+                        alert('Please enter some content first');
+                        return;
+                    }
+                    if (activeType === 'url' && !content.startsWith('http')) {
+                        content = 'https://' + content;
+                    }
+                    break;
+                    
+                case 'wifi':
+                    const ssid = document.getElementById('wifi-ssid').value;
+                    const password = document.getElementById('wifi-password').value;
+                    const security = document.getElementById('wifi-security').value;
+                    
+                    if (!ssid) {
+                        alert('Please enter WiFi network name');
+                        return;
+                    }
+                    
+                    content = `WIFI:T:${security};S:${ssid};P:${password};;`;
+                    break;
+                    
+                case 'contact':
+                    const name = document.getElementById('contact-name').value;
+                    const phone = document.getElementById('contact-phone').value;
+                    const email = document.getElementById('contact-email').value;
+                    const org = document.getElementById('contact-org').value;
+                    
+                    if (!name && !phone && !email) {
+                        alert('Please enter at least one contact detail');
+                        return;
+                    }
+                    
+                    content = 'BEGIN:VCARD\nVERSION:3.0\n';
+                    if (name) content += `FN:${name}\nN:${name.split(' ').reverse().join(';')};;;\n`;
+                    if (phone) content += `TEL:${phone}\n`;
+                    if (email) content += `EMAIL:${email}\n`;
+                    if (org) content += `ORG:${org}\n`;
+                    content += 'END:VCARD';
+                    break;
+                    
+                case 'sms':
+                    const number = document.getElementById('sms-number').value;
+                    const message = document.getElementById('sms-message').value;
+                    
+                    if (!number) {
+                        alert('Please enter a phone number');
+                        return;
+                    }
+                    
+                    content = `SMSTO:${number}:${message || ''}`;
+                    break;
+                    
+                case 'email':
+                    const emailAddr = document.getElementById('email-address').value;
+                    const subject = document.getElementById('email-subject').value;
+                    const body = document.getElementById('email-body').value;
+                    
+                    if (!emailAddr) {
+                        alert('Please enter an email address');
+                        return;
+                    }
+                    
+                    content = `MATMSG:TO:${emailAddr};SUB:${subject || ''};BODY:${body || ''};;`;
+                    break;
+                    
+                case 'upi':
+                    const upiId = document.getElementById('upi-id').value;
+                    const payeeName = document.getElementById('upi-name').value;
+                    const amount = document.getElementById('upi-amount').value;
+                    const note = document.getElementById('upi-note').value;
+                    
+                    if (!upiId) {
+                        alert('Please enter a UPI ID');
+                        return;
+                    }
+                    
+                    content = `upi://pay?pa=${encodeURIComponent(upiId)}`;
+                    if (payeeName) content += `&pn=${encodeURIComponent(payeeName)}`;
+                    if (amount) content += `&am=${amount}`;
+                    if (note) content += `&tn=${encodeURIComponent(note)}`;
+                    content += '&cu=INR';
+                    break;
+            }
+            
+            // Get colors from pickers
+            const color = document.getElementById('qr-color').value;
+            const bgColor = document.getElementById('qr-bg').value;
+            const size = parseInt(document.getElementById('qr-size').value);
+            const errorCorrection = document.getElementById('qr-error').value;
+            
+            const qrCodeElement = document.getElementById('qr-code');
+            qrCodeElement.innerHTML = '';
+            
+            QRCode.toCanvas(document.getElementById('qrCanvas'), content, {
+                color: {
+                    dark: color,
+                    light: bgColor
+                },
+                width: size,
+                errorCorrectionLevel: errorCorrection
+            }, function(error) {
+                if (error) {
+                    console.error(error);
+                    alert('Error generating QR code');
+                } else {
+                    const img = new Image();
+                    img.src = document.getElementById('qrCanvas').toDataURL('image/png');
+                    img.alt = 'Generated QR Code';
+                    img.style.maxWidth = '100%';
+                    qrCodeElement.appendChild(img);
+                    document.getElementById('qr-result').style.display = 'block';
+                    
+                    // Show share button if supported
+                    if (navigator.share) {
+                        document.getElementById('share-btn').style.display = 'inline-block';
+                    } else {
+                        document.getElementById('share-btn').style.display = 'none';
+                    }
+                }
+            });
+        }
+        
+        // Download QR Code
+        document.getElementById('download-btn').addEventListener('click', function() {
+            const canvas = document.getElementById('qrCanvas');
+            const link = document.createElement('a');
+            link.download = 'qr-code.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+        
+        // Share QR Code
+        document.getElementById('share-btn').addEventListener('click', async function() {
+            const canvas = document.getElementById('qrCanvas');
+            const dataUrl = canvas.toDataURL('image/png');
+            
+            try {
+                // Convert data URL to blob
+                const response = await fetch(dataUrl);
+                const blob = await response.blob();
+                
+                // Share the image file
+                await navigator.share({
+                    title: 'My QR Code',
+                    files: [new File([blob], 'qr-code.png', { type: 'image/png' })]
+                });
+            } catch (err) {
+                console.error('Error sharing:', err);
+                alert('Sharing failed. You can download the QR code instead.');
+            }
+        });
+        
+        // QR Code Scanning
+        let scannerInterval = null;
+        let stream = null;
+        let torchSupported = false;
+        let torchOn = false;
+        
+        // Start Scanner
+        document.getElementById('start-btn').addEventListener('click', startScanner);
+        document.getElementById('allow-camera-btn').addEventListener('click', startScanner);
+        
+        async function startScanner() {
+            const video = document.getElementById('scanner-video');
+            const resultElement = document.getElementById('scan-result');
+            const startBtn = document.getElementById('start-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const torchBtn = document.getElementById('torch-btn');
+            const cameraPermission = document.getElementById('camera-permission');
+            
+            // Check if scanner is already running
+            if (scannerInterval) {
+                return;
+            }
+            
+            try {
+                // Request camera access
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                
+                video.srcObject = stream;
+                await video.play();
+                
+                // Check for torch support
+                const track = stream.getVideoTracks()[0];
+                if ('applyConstraints' in track && 'torch' in track.getCapabilities()) {
+                    torchSupported = true;
+                    torchBtn.disabled = false;
+                }
+                
+                // Hide permission message
+                cameraPermission.style.display = 'none';
+                
+                // Update UI
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                
+                // Start scanning loop
+                scannerInterval = setInterval(() => {
+                    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Draw only the center portion (scanner frame area)
+                        const frameSize = Math.min(video.videoWidth, video.videoHeight) * 0.7;
+                        const x = (video.videoWidth - frameSize) / 2;
+                        const y = (video.videoHeight - frameSize) / 2;
+                        
+                        ctx.drawImage(video, x, y, frameSize, frameSize, 0, 0, canvas.width, canvas.height);
+                        
+                        try {
+                            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            const qrCode = jsQR(imageData.data, imageData.width, imageData.height);
+                            
+                            if (qrCode) {
+                                let resultHTML = `<p><strong>Scanned Content:</strong></p><p>${qrCode.data}</p>`;
+                                
+                                if (isURL(qrCode.data)) {
+                                    resultHTML += `<a href="${qrCode.data}" target="_blank" style="
+                                        display: inline-block;
+                                        padding: 8px 15px;
+                                        background: var(--primary);
+                                        color: white;
+                                        text-decoration: none;
+                                        border-radius: 4px;
+                                        margin-top: 10px;
+                                    ">Open Link</a>`;
+                                } else if (qrCode.data.startsWith('WIFI:')) {
+                                    const wifiDetails = parseWifiQR(qrCode.data);
+                                    resultHTML += `<div style="margin-top: 10px; padding: 10px; background: #e8f4fc; border-radius: 4px;">
+                                        <p><strong>WiFi Network:</strong> ${wifiDetails.ssid}</p>
+                                        ${wifiDetails.password ? `<p><strong>Password:</strong> ${wifiDetails.password}</p>` : ''}
+                                    </div>`;
+                                } else if (qrCode.data.startsWith('BEGIN:VCARD')) {
+                                    const contactDetails = parseVCard(qrCode.data);
+                                    resultHTML += `<div style="margin-top: 10px; padding: 10px; background: #e8f4fc; border-radius: 4px;">
+                                        ${contactDetails.name ? `<p><strong>Name:</strong> ${contactDetails.name}</p>` : ''}
+                                        ${contactDetails.tel ? `<p><strong>Phone:</strong> ${contactDetails.tel}</p>` : ''}
+                                        ${contactDetails.email ? `<p><strong>Email:</strong> ${contactDetails.email}</p>` : ''}
+                                        ${contactDetails.org ? `<p><strong>Organization:</strong> ${contactDetails.org}</p>` : ''}
+                                    </div>`;
+                                } else if (qrCode.data.startsWith('upi://pay')) {
+                                    const upiParams = new URLSearchParams(qrCode.data.split('?')[1]);
+                                    const upiId = upiParams.get('pa');
+                                    const payeeName = upiParams.get('pn');
+                                    const amount = upiParams.get('am');
+                                    const note = upiParams.get('tn');
+                                    
+                                    resultHTML += `<div style="margin-top: 10px; padding: 10px; background: #e8f4fc; border-radius: 4px;">
+                                        <p><strong>UPI ID:</strong> ${upiId}</p>
+                                        ${payeeName ? `<p><strong>Payee Name:</strong> ${payeeName}</p>` : ''}
+                                        ${amount ? `<p><strong>Amount:</strong> ₹${amount}</p>` : ''}
+                                        ${note ? `<p><strong>Note:</strong> ${note}</p>` : ''}
+                                        <a href="${qrCode.data}" style="
+                                            display: inline-block;
+                                            padding: 8px 15px;
+                                            background: var(--primary);
+                                            color: white;
+                                            text-decoration: none;
+                                            border-radius: 4px;
+                                            margin-top: 10px;
+                                        ">Pay Now</a>
+                                    </div>`;
+                                }
+                                
+                                resultElement.innerHTML = resultHTML;
+                                
+                                // Play success sound
+                                playScanSound();
+                                
+                                // Vibrate on mobile
+                                if ('vibrate' in navigator) {
+                                    navigator.vibrate(200);
+                                }
+                            }
+                        } catch (e) {
+                            console.log('Scanning...');
+                        }
+                    }
+                }, 200);
+            } catch (err) {
+                console.error('Camera error:', err);
+                document.getElementById('camera-permission').style.display = 'block';
+                resultElement.innerHTML = `<p>Error: ${err.message}</p>`;
+            }
+        }
+        
+        // Stop Scanner
+        document.getElementById('stop-btn').addEventListener('click', stopScanner);
+        
+        function stopScanner() {
+            const video = document.getElementById('scanner-video');
+            const startBtn = document.getElementById('start-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const torchBtn = document.getElementById('torch-btn');
+            
+            if (scannerInterval) {
+                clearInterval(scannerInterval);
+                scannerInterval = null;
+            }
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            video.srcObject = null;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            torchBtn.disabled = true;
+            torchOn = false;
+            torchBtn.textContent = 'Toggle Flash';
+        }
+        
+        // Toggle Torch
+        document.getElementById('torch-btn').addEventListener('click', toggleTorch);
+        
+        async function toggleTorch() {
+            if (!stream || !torchSupported) return;
+            
+            const track = stream.getVideoTracks()[0];
+            try {
+                await track.applyConstraints({
+                    advanced: [{ torch: !torchOn }]
+                });
+                torchOn = !torchOn;
+                document.getElementById('torch-btn').textContent = 
+                    torchOn ? 'Turn Flash Off' : 'Turn Flash On';
+            } catch (err) {
+                console.error('Torch error:', err);
+            }
+        }
+        
+        // File upload handling
+        document.getElementById('file-upload-area').addEventListener('click', function() {
+            document.getElementById('file-input').click();
+        });
+        
+        document.getElementById('upload-scan-btn').addEventListener('click', function() {
+            document.getElementById('file-input').click();
+        });
+        
+        document.getElementById('file-input').addEventListener('change', scanUploadedImage);
+        
+        async function scanUploadedImage() {
+            const fileInput = document.getElementById('file-input');
+            const resultElement = document.getElementById('scan-result');
+            
+            if (!fileInput.files || !fileInput.files[0]) {
+                alert('Please select an image file first');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const img = new Image();
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    try {
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const qrCode = jsQR(imageData.data, imageData.width, imageData.height);
+                        
+                        if (qrCode) {
+                            let resultHTML = `<p><strong>Scanned Content:</strong></p><p>${qrCode.data}</p>`;
+                            
+                            if (isURL(qrCode.data)) {
+                                resultHTML += `<a href="${qrCode.data}" target="_blank" style="
+                                    display: inline-block;
+                                    padding: 8px 15px;
+                                    background: var(--primary);
+                                    color: white;
+                                    text-decoration: none;
+                                    border-radius: 4px;
+                                    margin-top: 10px;
+                                ">Open Link</a>`;
+                            } else if (qrCode.data.startsWith('upi://pay')) {
+                                const upiParams = new URLSearchParams(qrCode.data.split('?')[1]);
+                                const upiId = upiParams.get('pa');
+                                const payeeName = upiParams.get('pn');
+                                const amount = upiParams.get('am');
+                                const note = upiParams.get('tn');
+                                
+                                resultHTML += `<div style="margin-top: 10px; padding: 10px; background: #e8f4fc; border-radius: 4px;">
+                                    <p><strong>UPI ID:</strong> ${upiId}</p>
+                                    ${payeeName ? `<p><strong>Payee Name:</strong> ${payeeName}</p>` : ''}
+                                    ${amount ? `<p><strong>Amount:</strong> ₹${amount}</p>` : ''}
+                                    ${note ? `<p><strong>Note:</strong> ${note}</p>` : ''}
+                                    <a href="${qrCode.data}" style="
+                                        display: inline-block;
+                                        padding: 8px 15px;
+                                        background: var(--primary);
+                                        color: white;
+                                        text-decoration: none;
+                                        border-radius: 4px;
+                                        margin-top: 10px;
+                                    ">Pay Now</a>
+                                </div>`;
+                            }
+                            
+                            resultElement.innerHTML = resultHTML;
+                            playScanSound();
+                        } else {
+                            resultElement.innerHTML = '<p>No QR code found in the image</p>';
+                        }
+                    } catch (e) {
+                        resultElement.innerHTML = '<p>Error scanning QR code: ' + e.message + '</p>';
+                    }
+                };
+                img.src = e.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        // Helper functions
+        function isURL(str) {
+            try {
+                new URL(str);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+        
+        function parseWifiQR(data) {
+            const result = {};
+            const parts = data.substring(5).split(';');
+            parts.forEach(part => {
+                const [key, value] = part.split(':');
+                if (key && value) {
+                    if (key === 'S') result.ssid = value;
+                    if (key === 'P') result.password = value;
+                    if (key === 'T') result.security = value;
+                }
+            });
+            return result;
+        }
+        
+        function parseVCard(data) {
+            const result = {};
+            const lines = data.split('\n');
+            lines.forEach(line => {
+                if (line.startsWith('FN:')) result.name = line.substring(3);
+                if (line.startsWith('TEL:')) result.tel = line.substring(4);
+                if (line.startsWith('EMAIL:')) result.email = line.substring(6);
+                if (line.startsWith('ORG:')) result.org = line.substring(4);
+            });
+            return result;
+        }
+        
+        function playScanSound() {
+            const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3');
+            audio.play().catch(e => console.log('Audio play failed:', e));
+        }
+        
+        // Initialize default tab
+        window.onload = function() {
+            // Check if the page was loaded with a hash (like #scan)
+            if (window.location.hash) {
+                const tabName = window.location.hash.substring(1);
+                const tabBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+                if (tabBtn) {
+                    tabBtn.click();
+                }
+            }
+        };
+    </script>
+</body>
+</html>
